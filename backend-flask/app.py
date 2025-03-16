@@ -76,6 +76,24 @@ class Course(db.Model):
     teacher_id = db.Column(
         db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+# Vulnerability: SQL Injection (Direct Query Execution)
+@app.route('/api/insecure-login', methods=['POST'])
+def insecure_login():
+    data = request.get_json()
+    conn = sqlite3.connect("learning.db")
+    cursor = conn.cursor()
+
+    # Vulnerability: SQL Injection - directly concatenating user input into the query
+    query = f"SELECT * FROM user WHERE username='{data['username']}' AND password='{data['password']}'"
+    cursor.execute(query)
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        return jsonify({'message': 'Login successful', 'user': user})
+    else:
+        return jsonify({'message': 'Invalid credentials'}), 401
+
 
 class Assignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
